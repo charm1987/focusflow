@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>FocusFlow — ADHD-Friendly Focus Timer</title>
+    <meta name="description" content="A focus timer that makes you declare your intention first. Built for ADHD brains.">
+    <meta name="theme-color" content="#0c0a1a">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%230c0a1a' width='100' height='100' rx='20'/><text x='50' y='68' text-anchor='middle' fill='%23a78bfa' font-size='50'>🎯</text></svg>">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <h1 class="logo">Focus<span class="accent">Flow</span></h1>
+        </div>
+        <div class="header-right">
+            <button class="icon-btn" id="stats-btn" title="Stats">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+            </button>
+            <button class="icon-btn" id="lang-btn" title="Language">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10A15.3 15.3 0 0 1 12 2z"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Language Modal -->
+    <div class="modal-overlay" id="lang-modal">
+        <div class="modal">
+            <h2 data-i18n="selectLanguage">Select Language</h2>
+            <div class="lang-grid">
+                <button class="lang-btn" data-lang="en">English</button>
+                <button class="lang-btn" data-lang="zh">中文</button>
+                <button class="lang-btn" data-lang="es">Español</button>
+                <button class="lang-btn" data-lang="ja">日本語</button>
+                <button class="lang-btn" data-lang="de">Deutsch</button>
+                <button class="lang-btn" data-lang="fr">Français</button>
+            </div>
+            <button class="btn-secondary modal-close" data-i18n="cancel">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Stats Modal -->
+    <div class="modal-overlay" id="stats-modal">
+        <div class="modal">
+            <h2 data-i18n="focusStats">Focus Stats</h2>
+            <div class="stats-detail">
+                <div class="stat-row">
+                    <span data-i18n="todaySessions">Today</span>
+                    <strong id="stat-today">0 sessions</strong>
+                </div>
+                <div class="stat-row">
+                    <span data-i18n="todayMinutes">Today's Focus</span>
+                    <strong id="stat-minutes">0 min</strong>
+                </div>
+                <div class="stat-row">
+                    <span data-i18n="streak">Current Streak</span>
+                    <strong id="stat-streak">0 days</strong>
+                </div>
+                <div class="stat-row">
+                    <span data-i18n="totalSessions">All Time</span>
+                    <strong id="stat-total">0 sessions</strong>
+                </div>
+            </div>
+            <h3 data-i18n="recentSessions">Recent Sessions</h3>
+            <div class="session-log" id="session-log"></div>
+            <button class="btn-secondary modal-close" data-i18n="close">Close</button>
+        </div>
+    </div>
+
+    <!-- Main Timer Screen -->
+    <main class="main">
+        <!-- Phase: Intention -->
+        <section class="phase" id="phase-intention">
+            <div class="intention-card">
+                <div class="intention-icon">🎯</div>
+                <h2 data-i18n="whatAreYouWorkingOn">What are you working on?</h2>
+                <p class="hint" data-i18n="intentionHint">Name your task before you start. ADHD brains work better with a clear target.</p>
+                <input type="text" id="intention-input" class="intention-input" placeholder="e.g., Write report chapter 3" maxlength="100" autocomplete="off">
+                <div class="duration-select">
+                    <label data-i18n="focusDuration">Focus Duration</label>
+                    <div class="duration-options">
+                        <button class="dur-btn" data-min="5">5<span class="dur-unit">min</span></button>
+                        <button class="dur-btn" data-min="10">10<span class="dur-unit">min</span></button>
+                        <button class="dur-btn active" data-min="15">15<span class="dur-unit">min</span></button>
+                        <button class="dur-btn" data-min="25">25<span class="dur-unit">min</span></button>
+                        <button class="dur-btn" data-min="45">45<span class="dur-unit">min</span></button>
+                    </div>
+                </div>
+                <button class="btn-start" id="start-btn" data-i18n="startFocus">Start Focus</button>
+            </div>
+        </section>
+
+        <!-- Phase: Focus -->
+        <section class="phase hidden" id="phase-focus">
+            <div class="timer-card">
+                <div class="task-label" id="task-label"></div>
+                <div class="timer-ring">
+                    <svg viewBox="0 0 200 200" class="ring-svg">
+                        <circle cx="100" cy="100" r="90" class="ring-bg"/>
+                        <circle cx="100" cy="100" r="90" class="ring-progress" id="ring-progress"/>
+                    </svg>
+                    <div class="timer-display">
+                        <span class="timer-min" id="timer-min">15</span>
+                        <span class="timer-sep">:</span>
+                        <span class="timer-sec" id="timer-sec">00</span>
+                    </div>
+                </div>
+                <div class="timer-controls">
+                    <button class="ctrl-btn" id="pause-btn" title="Pause">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                    </button>
+                    <button class="ctrl-btn ctrl-stop" id="stop-btn" title="Give Up">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+                    </button>
+                </div>
+                <p class="focus-msg" data-i18n="focusMessage">Stay focused. You've got this.</p>
+            </div>
+        </section>
+
+        <!-- Phase: Done -->
+        <section class="phase hidden" id="phase-done">
+            <div class="done-card">
+                <div class="done-icon" id="done-icon">🎉</div>
+                <h2 id="done-title" data-i18n="sessionComplete">Session Complete!</h2>
+                <p class="done-task" id="done-task"></p>
+                <p class="done-time" id="done-time"></p>
+                <div class="done-actions">
+                    <button class="btn-start" id="again-btn" data-i18n="anotherSession">Another Session</button>
+                    <button class="btn-secondary" id="break-btn" data-i18n="takeBreak">Take a Break</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Break Timer -->
+        <section class="phase hidden" id="phase-break">
+            <div class="break-card">
+                <div class="break-icon">🧘</div>
+                <h2 data-i18n="breakTime">Break Time</h2>
+                <div class="timer-ring">
+                    <svg viewBox="0 0 200 200" class="ring-svg ring-svg-break">
+                        <circle cx="100" cy="100" r="90" class="ring-bg"/>
+                        <circle cx="100" cy="100" r="90" class="ring-progress ring-progress-break" id="break-ring"/>
+                    </svg>
+                    <div class="timer-display">
+                        <span class="timer-min" id="break-min">5</span>
+                        <span class="timer-sep">:</span>
+                        <span class="timer-sec" id="break-sec">00</span>
+                    </div>
+                </div>
+                <button class="btn-secondary" id="skip-break-btn" data-i18n="skipBreak">Skip Break</button>
+            </div>
+        </section>
+
+        <!-- Daily Progress -->
+        <section class="daily-progress" id="daily-progress">
+            <div class="progress-label">
+                <span data-i18n="todaysFocus">Today's Focus</span>
+                <span class="progress-time" id="progress-time">0 min</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+            </div>
+            <div class="progress-goal">
+                <span data-i18n="dailyGoal">Daily Goal: 2 hours</span>
+            </div>
+        </section>
+    </main>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Audio -->
+    <audio id="bell" preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2LkYqDfXR3goqNiYN9dXZ/iI2KhHx0d4GIjIqEfHN3gIiMiYR8c3eAiIyJhHxzd4CIjImEfHN3gIiMiQ==" type="audio/wav">
+    </audio>
+
+    <script src="app.js"></script>
+</body>
+</html>
